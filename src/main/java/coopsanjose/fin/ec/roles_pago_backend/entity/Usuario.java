@@ -17,7 +17,7 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idUsuario;
 
-    @Column(nullable = false, unique = true, length = 10)
+    @Column(unique = true, length = 10)
     private String cedula;
 
     @Column(name = "username_ad", nullable = false, unique = true, length = 50)

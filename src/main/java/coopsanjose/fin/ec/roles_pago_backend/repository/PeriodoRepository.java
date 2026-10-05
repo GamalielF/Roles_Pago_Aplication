@@ -1,4 +1,4 @@
-package coopsanjose.fin.ec.roles_pago_backend.respository;
+package coopsanjose.fin.ec.roles_pago_backend.repository;
 
 import coopsanjose.fin.ec.roles_pago_backend.entity.Periodo;
 import org.springframework.data.jpa.repository.JpaRepository;

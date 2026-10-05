@@ -1,8 +1,9 @@
-package coopsanjose.fin.ec.roles_pago_backend.respository;
+package coopsanjose.fin.ec.roles_pago_backend.repository;
 
-import ec.fin.coopsanjose.rolespagobackend.entity.Rol;
-import ec.fin.coopsanjose.rolespagobackend.entity.UsuarioRol;
+import coopsanjose.fin.ec.roles_pago_backend.entity.Rol;
+import coopsanjose.fin.ec.roles_pago_backend.entity.UsuarioRol;
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import java.util.List;
 import java.util.Optional;
 
