@@ -22,10 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.HexFormat;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -94,10 +91,17 @@ public class RolPagoCargaService {
                 return rechazo(nombre, cedula, "Supera el tamano maximo de " + (maxBytes / 1024 / 1024) + " MB");
             }
 
-            // 4. Que sea un PDF de verdad (cabecera "%PDF-"), no solo la extension
+            // 4. Que sea un PDF de verdad (cabecera "%PDF-" en los primeros 1024 bytes)
             byte[] contenido = file.getBytes();
-            if (!esPdf(contenido)) {
+            int inicio = posicionCabeceraPdf(contenido);
+            if (inicio < 0) {
                 return rechazo(nombre, cedula, "El contenido no es un PDF valido");
+            }
+// Normalizacion: descartamos los bytes basura antes de la cabecera, para que
+// el archivo guardado empiece exactamente en "%PDF-". Asi cualquier visor lo
+// abre sin depender de su tolerancia, y el hash queda estable.
+            if (inicio > 0) {
+                contenido = Arrays.copyOfRange(contenido, inicio, contenido.length);
             }
 
             // 5. Mes/anio dentro del PDF vs periodo elegido por RRHH
@@ -178,9 +182,24 @@ public class RolPagoCargaService {
         return n.substring(n.lastIndexOf('/') + 1).trim();
     }
 
-    private boolean esPdf(byte[] bytes) {
-        return bytes.length >= 5
-                && new String(bytes, 0, 5, StandardCharsets.ISO_8859_1).equals("%PDF-");
+    // import java.util.Arrays;
+
+    private static final byte[] CABECERA_PDF = "%PDF-".getBytes(StandardCharsets.ISO_8859_1);
+
+    /**
+     * Busca "%PDF-" dentro de los primeros 1024 bytes (lo que permite la
+     * especificacion PDF). Devuelve su posicion, o -1 si no es un PDF.
+     */
+    private int posicionCabeceraPdf(byte[] bytes) {
+        int limite = Math.min(bytes.length, 1024) - CABECERA_PDF.length;
+        for (int i = 0; i <= limite; i++) {
+            boolean coincide = true;
+            for (int j = 0; j < CABECERA_PDF.length; j++) {
+                if (bytes[i + j] != CABECERA_PDF[j]) { coincide = false; break; }
+            }
+            if (coincide) return i;
+        }
+        return -1;
     }
 
     private String sha256(byte[] bytes) {
