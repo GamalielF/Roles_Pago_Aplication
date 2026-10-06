@@ -1,8 +1,10 @@
 package coopsanjose.fin.ec.roles_pago_backend.controller;
 
 import coopsanjose.fin.ec.roles_pago_backend.dto.ArchivoResumenDto;
+import coopsanjose.fin.ec.roles_pago_backend.dto.PublicacionDto;
 import coopsanjose.fin.ec.roles_pago_backend.dto.ResultadoCargaDto;
 import coopsanjose.fin.ec.roles_pago_backend.entity.Usuario;
+import coopsanjose.fin.ec.roles_pago_backend.service.PeriodoService;
 import coopsanjose.fin.ec.roles_pago_backend.service.RolPagoCargaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,15 @@ import java.util.List;
 public class RrhhRolPagoController {
 
     private final RolPagoCargaService cargaService;
+    // campo nuevo junto a cargaService:
+    private final PeriodoService periodoService;
+
+    // import ...dto.PublicacionDto; ...service.PeriodoService;
+    @PostMapping("/periodos/{periodo}/publicar")
+    public PublicacionDto publicar(@PathVariable String periodo,
+                                   @AuthenticationPrincipal Usuario rrhh) {
+        return periodoService.publicar(parsePeriodo(periodo), rrhh);
+    }
 
     /** Carga masiva: form-data con "periodo" (yyyy-MM) y varios "archivos". */
     @PostMapping(value = "/carga", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

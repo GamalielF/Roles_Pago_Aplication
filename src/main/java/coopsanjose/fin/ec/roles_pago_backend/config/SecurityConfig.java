@@ -6,9 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -17,8 +19,6 @@ public class SecurityConfig {
 
     private final UsuarioService usuarioService;
 
-    // Bandera de seguridad: el filtro mock SOLO se registra si esta en true.
-    // Si alguien despliega sin esta propiedad, queda apagado (no abierto).
     @Value("${app.security.mock-enabled:false}")
     private boolean mockEnabled;
 
@@ -27,22 +27,22 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Sin identidad -> 401 (el frontend redirige al login).
+                // Con identidad pero sin permiso -> 403.
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
-                        // ORDEN IMPORTANTE: primero las reglas especificas...
+                        // De lo mas especifico a lo mas general; anyRequest() SIEMPRE al final.
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/rrhh/**").hasAnyRole("RRHH", "ADMIN")
-                        // ...y al FINAL la regla general. Despues de anyRequest()
-                        // ya no se puede agregar ningun requestMatchers.
+                        .requestMatchers("/api/roles-pago/**").authenticated()
                         .anyRequest().permitAll()
                 );
 
-        // PROTOTIPO -> filtro mock (cabeceras X-Mock-*)
-        // PRODUCCION -> reemplazar por: new JwtAuthFilter(usuarioService)
         if (mockEnabled) {
             http.addFilterBefore(new MockAuthFilter(usuarioService),
                     UsernamePasswordAuthenticationFilter.class);
         }
-
         return http.build();
     }
 }

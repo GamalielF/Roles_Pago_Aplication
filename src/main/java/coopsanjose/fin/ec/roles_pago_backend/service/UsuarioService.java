@@ -10,6 +10,7 @@ import coopsanjose.fin.ec.roles_pago_backend.entity.UsuarioRol;
 import coopsanjose.fin.ec.roles_pago_backend.repository.UsuarioRepository;
 import coopsanjose.fin.ec.roles_pago_backend.repository.UsuarioRolRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
@@ -48,7 +50,8 @@ public class UsuarioService {
                     .nombreCompleto(request.getNombreCompleto())
                     .cargo(request.getCargo())
                     .departamento(request.getDepartamento())
-                    .cedula(request.getCedula())
+                    // Solo se vincula si la cedula no pertenece ya a OTRO usuario
+                    .cedula(cedulaSegura(request.getCedula(), request.getUsernameAd()))
                     .fechaPrimerAcceso(LocalDateTime.now())
                     .activo(true)
                     .build();
@@ -73,13 +76,15 @@ public class UsuarioService {
             usuario.setCargo(request.getCargo());
             usuario.setDepartamento(request.getDepartamento());
             // La cedula solo se escribe si aun esta vacia (no se sobrescribe)
-            if (request.getCedula() != null && usuario.getCedula() == null) {
-                usuario.setCedula(request.getCedula());
+            // y siempre que no pertenezca ya a otro usuario.
+            if (usuario.getCedula() == null) {
+                usuario.setCedula(cedulaSegura(request.getCedula(), request.getUsernameAd()));
             }
             usuario = usuarioRepository.save(usuario);
 
-            auditoriaService.registrar(usuario, TipoEvento.LOGIN, null,
-                    null, null, ResultadoAuditoria.EXITOSO, ip, userAgent);
+            // Cuando llegue el JWT real, lo ideal es registrar el login una sola
+            // vez al emitir el token; mientras tanto se aplica una ventana de 30 min.
+            auditoriaService.registrarLogin(usuario, ip, userAgent);
         }
 
         // Bootstrap del primer ADMIN: resuelve el "huevo y la gallina"
@@ -103,6 +108,23 @@ public class UsuarioService {
         Hibernate.initialize(usuario.getRoles());
 
         return new ResolucionUsuario(usuario, esPrimerAcceso);
+    }
+
+    /**
+     * Devuelve la cedula solo si es utilizable para ESTE usuario.
+     * Si ya pertenece a otro usuario, devuelve null (queda sin vincular) en
+     * lugar de dejar que MySQL rechace el INSERT/UPDATE por la restriccion
+     * UNIQUE, lo que antes terminaba en un error 500 dentro del filtro.
+     */
+    private String cedulaSegura(String cedula, String username) {
+        if (cedula == null || cedula.isBlank()) return null;
+
+        Optional<Usuario> dueno = usuarioRepository.findByCedula(cedula);
+        if (dueno.isPresent() && !dueno.get().getUsernameAd().equalsIgnoreCase(username)) {
+            log.warn("La cedula {} ya pertenece a otro usuario; se ignora para '{}'", cedula, username);
+            return null;
+        }
+        return cedula;
     }
 
     /** Usado por los filtros de seguridad (mock o JWT) para poblar el SecurityContext. */
