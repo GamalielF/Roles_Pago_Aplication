@@ -54,7 +54,7 @@ public class PeriodoService {
                     "El periodo " + ym + " ya fue publicado el " + periodo.getFechaPublicacion());
         }
 
-        long total = archivoRepository.countByPeriodo_IdPeriodo(periodo.getIdPeriodo());
+        long total = archivoRepository.countByPeriodo_IdPeriodo(periodo.getId());
         if (total == 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "No se puede publicar: el periodo " + ym + " no tiene archivos cargados");
@@ -66,7 +66,7 @@ public class PeriodoService {
         periodoRepository.save(periodo);
 
         long advertencias = archivoRepository.countByPeriodo_IdPeriodoAndEstadoValidacion(
-                periodo.getIdPeriodo(), EstadoValidacion.ADVERTENCIA);
+                periodo.getId(), EstadoValidacion.ADVERTENCIA);
 
         return new PublicacionDto(ym.toString(), periodo.getEstado(),
                 periodo.getFechaPublicacion(), total, advertencias);

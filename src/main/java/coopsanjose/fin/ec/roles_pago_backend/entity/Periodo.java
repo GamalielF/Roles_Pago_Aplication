@@ -1,5 +1,6 @@
 package coopsanjose.fin.ec.roles_pago_backend.entity;
 
+import coopsanjose.fin.ec.roles_pago_backend.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -10,15 +11,19 @@ import java.time.LocalDateTime;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class Periodo {
+public class Periodo extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idPeriodo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publicado_por")
     private Usuario publicadoPor;
+
+    /*
+    @CreatedBy
+    @Column(name = "PUBLICADOPOR", nullable = false, updatable = false)
+    private String publicadoPor;
+    *
+    * */
 
     @Column(name = "periodo", nullable = false)
     private LocalDate fechaPeriodo; // siempre el dia 1 del mes, ej. 2026-08-01

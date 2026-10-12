@@ -13,10 +13,10 @@ public class RolPagoArchivo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idArchivo;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_periodo", nullable = false)
+    @JoinColumn(name = "id", nullable = false)
     private Periodo periodo;
 
     @ManyToOne(fetch = FetchType.LAZY)

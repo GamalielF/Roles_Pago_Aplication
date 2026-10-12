@@ -1,10 +1,12 @@
 package coopsanjose.fin.ec.roles_pago_backend.controller;
 
+import coopsanjose.fin.ec.roles_pago_backend.common.ApiResponse;
 import coopsanjose.fin.ec.roles_pago_backend.dto.RolPagoContenidoDto;
 import coopsanjose.fin.ec.roles_pago_backend.entity.Usuario;
 import coopsanjose.fin.ec.roles_pago_backend.service.RolPagoConsultaService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,11 +21,12 @@ public class RolPagoConsultaController {
 
     /** GET /api/roles-pago/0202125712/periodos  ->  ["2026-08", "2026-07", ...] */
     @GetMapping("/{cedula}/periodos")
-    public List<String> periodos(@PathVariable String cedula,
-                                 @AuthenticationPrincipal Usuario usuario,
-                                 HttpServletRequest req) {
-        return consultaService.periodosDisponibles(cedula, usuario,
-                req.getRemoteAddr(), req.getHeader("User-Agent"));
+    public ResponseEntity<ApiResponse<List<String>>> periodos(@PathVariable String cedula,
+                                                @AuthenticationPrincipal Usuario usuario,
+                                                HttpServletRequest req) {
+        List<String> reponse = consultaService.periodosDisponibles(cedula, usuario, req.getRemoteAddr(), req.getHeader("User-Agent"));
+
+        return ResponseEntity.ok(ApiResponse.successWithData("Listado de periodos encontrados", reponse));
     }
 
     /**

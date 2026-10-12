@@ -127,7 +127,7 @@ public class RolPagoCargaService {
             // 6. Duplicados: mismo contenido => no se toca; distinto => se reemplaza
             String hash = sha256(contenido);
             Optional<RolPagoArchivo> existente =
-                    archivoRepository.findByCedulaAndPeriodo_IdPeriodo(cedula, periodo.getIdPeriodo());
+                    archivoRepository.findByCedulaAndPeriodo_IdPeriodo(cedula, periodo.getId());
 
             if (existente.isPresent() && hash.equals(existente.get().getHashArchivo())) {
                 return new ResultadoArchivoDto(nombre, cedula, existente.get().getEstadoValidacion(),
@@ -162,7 +162,7 @@ public class RolPagoCargaService {
 
     public List<ArchivoResumenDto> listar(YearMonth ym) {
         Periodo periodo = periodoService.obtener(ym);
-        return archivoRepository.findByPeriodo_IdPeriodo(periodo.getIdPeriodo()).stream()
+        return archivoRepository.findByPeriodo_IdPeriodo(periodo.getId()).stream()
                 .map(a -> new ArchivoResumenDto(a.getCedula(), a.getNombreArchivoOriginal(),
                         a.getEstadoValidacion(), a.getDetalleValidacion(),
                         a.getTamanoBytes(), a.getFechaSubida()))
